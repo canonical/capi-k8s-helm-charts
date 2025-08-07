@@ -1,0 +1,16 @@
+name: Test
+
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo snap install k8s
+      - name: Run linters
+        run: sudo k8s helm lint charts/openstack-ck8s-cluster

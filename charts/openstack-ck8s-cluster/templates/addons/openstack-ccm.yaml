@@ -1,0 +1,77 @@
+---
+apiVersion: addons.cluster.x-k8s.io/v1alpha1
+kind: HelmChartProxy
+metadata:
+  name: {{ include "openstack-ck8s-cluster.componentName" (list . "ccm-openstack") }}
+  labels: {{ include "openstack-ck8s-cluster.componentLabels" (list . "ccm-openstack") | nindent 4 }}
+spec:
+  clusterSelector:
+    matchLabels:
+      ccmOpenStackChart: enabled
+  namespace: openstack-system
+  repoURL: https://kubernetes.github.io/cloud-provider-openstack
+  chartName: openstack-cloud-controller-manager
+  version: 2.32.0
+  options:
+    waitForJobs: true
+    wait: true
+    timeout: 5m
+    install:
+      createNamespace: true
+  valuesTemplate: |
+    secret:
+      enabled: true
+      create: true
+      name: cloud-config
+    cloudConfigContents: |
+      [Global]
+      use-clouds=true
+      cloud={{ .Values.cloudName }}
+      tls-insecure=true
+      [Networking]
+      internal-network-name={{ "{{" }} .InfraCluster.status.network.name {{ "}}" }}
+      [LoadBalancer]
+      {{- $lbItems := default dict .Values.addons.openstack.cloudConfig.LoadBalancer }}
+      {{- if hasKey $lbItems "floating-network-id" }}
+      floating-network-id={{ index $lbItems "floating-network-id" }}
+      {{- else }}
+      floating-network-id={{ "{{" }} .InfraCluster.status.externalNetwork.id {{ "}}" }}
+      {{- end }}
+      {{- range $lbName, $lbValue := omit $lbItems "floating-network-id" }}
+      {{ $lbName }}={{ $lbValue }}
+      {{- end }}
+    cluster:
+      name: {{ include "openstack-ck8s-cluster.clusterName" . }}
+    controllerExtraArgs: |-
+      - --use-service-account-credentials=false
+    extraVolumes:
+      - name: flexvolume-dir
+        hostPath:
+          path: /usr/libexec/kubernetes/kubelet-plugins/volume/exec
+      - name: k8s-certs
+        hostPath:
+          path: /etc/kubernetes/pki
+      - name: cloud-config-credentials-volume
+        secret:
+          defaultMode: 420
+          secretName: cloud-config-credentials
+    extraVolumeMounts:
+      - name: flexvolume-dir
+        mountPath: /usr/libexec/kubernetes/kubelet-plugins/volume/exec
+        readOnly: true
+      - name: k8s-certs
+        mountPath: /etc/kubernetes/pki
+        readOnly: true
+      - name: cloud-config-credentials-volume
+        mountPath: /etc/openstack
+        readOnly: true
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: ""
+    tolerations:
+      - key: node.cloudprovider.kubernetes.io/uninitialized
+        value: "true"
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule

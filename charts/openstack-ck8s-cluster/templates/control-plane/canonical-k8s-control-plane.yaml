@@ -1,0 +1,30 @@
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
+kind: CK8sControlPlane
+metadata:
+  name: {{ include "openstack-ck8s-cluster.componentName" (list . "control-plane") }}
+  labels: {{ include "openstack-ck8s-cluster.componentLabels" (list . "control-plane") | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  machineTemplate:
+    metadata:
+      labels: {{ include "openstack-ck8s-cluster.componentSelectorLabels" (list . "control-plane") | nindent 8 }}
+    infrastructureTemplate:
+      kind: OpenStackMachineTemplate
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      name: {{ include "openstack-ck8s-cluster.controlplane.machinetemplate.name" . }}
+      namespace: {{ .Release.Namespace }}
+    {{- with .Values.ck8sControlPlane.machineTemplate }}
+    nodeDrainTimeout: {{ .nodeDrainTimeout }}
+    nodeVolumeDetachTimeout: {{ .nodeVolumeDetachTimeout }}
+    nodeDeletionTimeout: {{ .nodeDeletionTimeout }}
+    {{- end }}
+  remediationStrategy: {{ toYaml .Values.ck8sControlPlane.remediationStrategy | nindent 4 }}
+  replicas: {{ .Values.controlPlane.machineCount }}
+  spec:
+    controlPlane:
+      cloudProvider: external
+    extraKubeletArgs:
+      --provider-id: openstack:///{{ "{{" }} instance_id {{ "}}" }}
+  version: v{{ .Values.kubernetesVersion | trimPrefix "v" }}

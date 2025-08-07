@@ -1,0 +1,44 @@
+{{- define "openstack-ck8s-cluster.nodegroup.configtemplate.spec.nodeLabels" -}}
+{{- $ctx := index . 0 }}
+{{- $nodeGroup := index . 1 }}
+{{- $defaultLabels := dict "{{ $.Values.projectPrefix }}/node-group" $nodeGroup.name }}
+{{- $nodeLabels := dig "nodeLabels" dict $nodeGroup | mergeOverwrite $defaultLabels }}
+{{- end }}
+
+{{- define "openstack-ck8s-cluster.nodegroup.configtemplate.spec" -}}
+{{- $ctx := index . 0 }}
+{{- $nodeGroup := index . 1 }}
+template:
+  spec:
+    controlPlane:
+      cloudProvider: external
+    extraKubeletArgs:
+      --provider-id: openstack:///{{ "{{" }} instance_id {{ "}}" }}
+{{- end }}
+
+{{- define "openstack-ck8s-cluster.nodegroup.configtemplate.checksum" -}}
+{{- include "openstack-ck8s-cluster.nodegroup.configtemplate.spec" . | sha256sum }}
+{{- end }}
+
+{{- define "openstack-ck8s-cluster.nodegroup.configtemplate.name" -}}
+{{- $ctx := index . 0 }}
+{{- $nodeGroup := index . 1 }}
+{{- $checksum := include "openstack-ck8s-cluster.nodegroup.configtemplate.checksum" . }}
+{{- include "openstack-ck8s-cluster.componentName" (list $ctx $nodeGroup.name) }}-{{ trunc 8 $checksum }}
+{{- end }}
+
+{{- range $nodeGroupOverrides := .Values.nodeGroups }}
+{{- $nodeGroup := deepCopy $.Values.nodeGroupDefaults | mustMerge $nodeGroupOverrides }}
+--- 
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
+kind: CK8sConfigTemplate
+metadata:
+  name: {{ include "openstack-ck8s-cluster.nodegroup.configtemplate.name" (list $ $nodeGroup) }}
+  labels:
+    {{- include "openstack-ck8s-cluster.componentLabels" (list $ "worker") | nindent 4 }}
+    {{ $.Values.projectPrefix }}/node-group: {{ $nodeGroup.name }}
+  annotations:
+    {{ $.Values.projectPrefix }}/template-checksum: {{ include "openstack-ck8s-cluster.nodegroup.configtemplate.checksum" (list $ $nodeGroup) }}
+    helm.sh/resource-policy: keep
+spec: {{ include "openstack-ck8s-cluster.nodegroup.configtemplate.spec" (list $ $nodeGroup) | nindent 2 }}
+{{- end }}

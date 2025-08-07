@@ -1,0 +1,64 @@
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OpenStackCluster
+metadata:
+  name: {{ include "openstack-ck8s-cluster.clusterName" . }}
+  labels: {{ include "openstack-ck8s-cluster.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  # Based on https://github.com/kubernetes-sigs/cluster-api-provider-openstack/blob/v0.11.3/config/crd/bases/infrastructure.cluster.x-k8s.io_openstackclusters.yaml
+  {{- with .Values.apiServer }}
+  {{- if .enableLoadBalancer }}
+  apiServerLoadBalancer:
+    enabled: true
+    {{- if .loadBalancerProvider }}
+    provider: {{ .loadBalancerProvider }}
+    {{- end }}
+    {{- if .allowedCidrs }}
+    allowedCidrs:
+      {{- range .allowedCidrs }}
+      - {{ . }}
+      {{- end}}
+    {{- end }}
+  {{- end }}
+  apiServerPort: 6443
+  controlPlaneOmitAvailabilityZone: true
+  disableAPIServerFloatingIP: {{ not .associateFloatingIP }}
+  {{- end }}
+  {{- with .Values.clusterNetworking }}
+  {{- with .externalNetworkId }}
+  externalNetwork:
+    id: {{ . }}
+  {{- end }}
+  {{- with .internalNetwork }}
+  {{- if or .networkFilter .subnetFilter }}
+  {{- with .networkFilter }}
+  network: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .subnetFilter }}
+  subnets:
+    - {{ toYaml . | nindent 6 }}
+  {{- end }}
+  {{- else }}
+  managedSubnets:
+    - cidr: {{ .nodeCidr }}
+      {{- with (default $.Values.clusterNetworking.dnsNameservers .dnsNameservers) }}
+      dnsNameservers: {{ toYaml . | nindent 8 }}
+      {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- end }} 
+  managedSecurityGroups:
+    allowAllInClusterTraffic: true
+    allNodesSecurityGroupRules:
+    - description: ssh access
+      direction: ingress
+      etherType: IPv4
+      name: ssh
+      portRangeMax: 22
+      portRangeMin: 22
+      protocol: tcp
+  identityRef:
+    name: {{ include "openstack-ck8s-cluster.cloudCredentialsSecretName" . }}
+    cloudName: {{ .Values.cloudName }}
