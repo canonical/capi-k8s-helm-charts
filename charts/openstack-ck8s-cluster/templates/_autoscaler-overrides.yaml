@@ -1,0 +1,49 @@
+# Override values.yaml for autoscaler subchart
+
+autoscaler:
+  nameOverride: autoscaler
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  image:
+    repository: registry.k8s.io/autoscaling/cluster-autoscaler
+    tag: v1.30.4
+  cloudProvider: clusterapi
+  additionalLabels:
+    {{- include "openstack-ck8s-cluster.componentSelectorLabels" (list . "autoscaler") | nindent 4 }}
+  autoDiscovery:
+    clusterName: {{ include "openstack-ck8s-cluster.clusterName" . }}
+    namespace: {{ .Release.Namespace }}
+  clusterAPIWorkloadKubeconfigPath: /mnt/kubeconfig/value
+  clusterAPIMode: kubeconfig-incluster
+  clusterAPIConfigMapsNamespace: {{ .Release.Namespace }}
+  extraArgs:
+    logtostderr: true
+    stderrthreshold: info
+    v: 4
+    cordon-node-before-terminating: true
+    expander: least-waste,random
+    skip-nodes-with-custom-controller-pods: false
+    skip-nodes-with-local-storage: false
+    skip-nodes-with-system-pods: true
+    stderrthreshold: info
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+  extraVolumeMounts:
+    - name: kubeconfig
+      mountPath: /mnt/kubeconfig
+      readOnly: true
+  extraVolumes:
+    - name: kubeconfig
+      secret:
+        defaultMode: 420
+        secretName: {{ include "openstack-ck8s-cluster.componentName" (list . "kubeconfig") }}

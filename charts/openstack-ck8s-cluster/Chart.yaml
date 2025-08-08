@@ -1,0 +1,15 @@
+apiVersion: v2
+name: openstack-ck8s-cluster
+description: A Helm chart for for deploying a canonical kubernetes cluster on an OpenStack cloud using Cluster API.
+type: application
+version: 0.1.0
+# Using https://github.com/kubernetes-sigs/cluster-api version
+# Tested with v1.9.6
+appVersion: "1.9.6"
+
+dependencies:
+  - name: autoscaler
+    # https://kubernetes.github.io/autoscaler/index.yaml
+    # Check helm chart version based on application version
+    version: "9.37.0"
+    repository: https://kubernetes.github.io/autoscaler

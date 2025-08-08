@@ -1,0 +1,126 @@
+# Default values for openstack-ck8s-cluster.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Information on CRD templates can be found here: https://doc.crds.dev/github.com/kubernetes-sigs/cluster-api
+
+#######################################################
+# Settings required by CRDs that may not modify often #
+#######################################################
+
+# Name of the cluster
+# Defaults to Release name
+# clusterName:
+
+# Prefix to use for labels, annotations
+projectPrefix: capi.ck8s
+
+# Required by Cluster CRD
+# More information can be found here: https://github.com/kubernetes-sigs/cluster-api/blob/main/config/crd/bases/cluster.x-k8s.io_clusters.yaml
+clusterNetwork:
+  apiServerPort: 6443
+  pods:
+    cidrBlocks:
+      - 10.1.0.0/16
+  serviceDomain: cluster.local
+  services:
+    cidrBlocks:
+      - 10.152.183.0/24
+
+# Required by CK8sControlPlane
+# More information can be found here: https://github.com/canonical/cluster-api-k8s/blob/main/controlplane/config/crd/bases/controlplane.cluster.x-k8s.io_ck8scontrolplanes.yaml
+ck8sControlPlane:
+  machineTemplate:
+    nodeDeletionTimeout: 5m0s
+    nodeDrainTimeout: 5m0s
+    nodeVolumeDetachTimeout: 5m0s
+  remediationStrategy:
+    maxRetry: 3
+    minHealthyPeriod: 1h
+    retryPeriod: 20m
+
+# OpenStack cloud config credentials aka clouds.yaml and cacert
+# These parameters can be ignored if `cloudCredentialsSecretName` is provided
+# clouds:
+# cloudCACert:
+
+# OpenStack cloud name to use in clouds.yaml
+# Defaults to openstack in OpenStack Magnum for application credentials
+cloudName: openstack
+
+
+###################################################################
+# Below set of key/values are coming from Magnum Capi Helm driver #
+###################################################################
+
+# Settings for kubernetes API server
+# Determines whether to use loadbalancer or not, floating IPs are not, and the loadbalancer provider to use
+apiServer:
+  enableLoadBalancer: true
+  loadBalancerProvider: ovn
+  allowedCidrs: []
+  associateFloatingIP: true
+
+# OpenStack clouds.yaml as a secret
+# Magnum CAPI Helm driver creates secret and provides the secret name
+cloudCredentialsSecretName:
+
+# Networking related parameters
+clusterNetworking:
+  dnsNameservers: []
+  # externalNetworkId:
+  # internalNetwork:
+  #   networkFilter:
+  #   nodeCidr:
+  #   subnetFilter:
+
+# Control plane related parameters including scaling and health check requirements
+controlPlane:
+  healthCheck:
+    enabled: False
+  machineCount: 1
+  machineFlavor: m1.medium
+
+# Kubernetes version that is going to be deployed
+kubernetesVersion: 1.32.6
+
+# Image ID to use to deploy control plane and worker VMs
+# machineImageId:
+# SSH Key to be used to deploy control plane and worker VMs
+# machineSSHKeyName:
+
+# Default settings related to worker nodes
+nodeGroupDefaults:
+  healthCheck:
+    enabled: true
+
+# Settings related to Worker node nodeGroups
+nodeGroups:
+#  - name: test
+#    machineFlavor: test
+#    machineCount: 1
+#    autoscale:
+#    machineCountMin:
+#    machineCountMax:
+
+# Cluster addons related parameters
+# By default OpenStack Cloud Controller Manager, CSI Cinder will be deployed
+addons:
+addons:
+  openstack:
+    cloudConfig: {}
+#      LoadBalancer:
+#        lb-provider:
+#        lb-method:
+#        create-monitor:
+    csiCinder: {}
+#      additionalStorageClasses: []
+#      defaultStorageClass:
+#        allowVolumeExpansion: true
+#        allowedTopologies: []
+#        availabilityZone: nova
+#        enabled: True
+#        fstype: ext4
+#        name: default
+#        reclaimPolicy: Retain
+#        volumeType: __DEFAULT__
