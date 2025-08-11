@@ -8,44 +8,57 @@
 # Settings required by CRDs that may not modify often #
 #######################################################
 
-# Name of the cluster
-# Defaults to Release name
-# clusterName:
+# clusterName: Name of the cluster, defaults to Release name (string)
 
-# Prefix to use for labels, annotations
+# projectPrefix: Prefix to use for labels, annotations (string)
 projectPrefix: capi.ck8s
 
 # Required by Cluster CRD
 # More information can be found here: https://github.com/kubernetes-sigs/cluster-api/blob/main/config/crd/bases/cluster.x-k8s.io_clusters.yaml
+# clusterNetwork: Network related information (dictionary)
 clusterNetwork:
+  # apiServerPort: Port on which k8s apiserver runs on (integer)
   apiServerPort: 6443
+  # pods: k8s cluster pod configuration (dictionary)
   pods:
+    # cidrBlocks: CIDRs to be configured for k8s pods (list of cidr or ip ranges)
     cidrBlocks:
       - 10.1.0.0/16
+  # serviceDomain: Domain to be configured in k8s (string)
   serviceDomain: cluster.local
+  # services: k8s cluster service configuration (dictionary)
   services:
+    # cidrBlocks: CIDRs to be configured for k8s services (list of cidr or ip ranges)
     cidrBlocks:
       - 10.152.183.0/24
 
 # Required by CK8sControlPlane
 # More information can be found here: https://github.com/canonical/cluster-api-k8s/blob/main/controlplane/config/crd/bases/controlplane.cluster.x-k8s.io_ck8scontrolplanes.yaml
+# ck8sControlPlane: Control plane related configuration (dictionary)
 ck8sControlPlane:
+  # machhineTemplate: Information on how machines should be shaped (dictionary)
   machineTemplate:
+    # nodeDeletionTimeout: How long the machine controller will attempt to delete the Node that the Machine hosts after the Machine is marked for deletion (string)
     nodeDeletionTimeout: 5m0s
+    # nodeDrainTimeout: Total amount of time that the controller will spend on draining a controlplane node (string)
     nodeDrainTimeout: 5m0s
+    # nodeVolumeDetachTimeout: Total amount of time that the controller will spend on waiting for all volumes to be detached (string)
     nodeVolumeDetachTimeout: 5m0s
+  # remediationStrategy: Controls how control plane machine remediation happens (dictionary) 
   remediationStrategy:
+    # maxRetry: Max number of retries while attempting to remediate an unhealthy machine (integer)
     maxRetry: 3
+    # minHealthyPeriod: The duration after which KCP will consider any failure to a machine unrelated from the previous one (string)
     minHealthyPeriod: 1h
+    # retryPeriod: The duration that KCP should wait before remediating a machine being created as a replacement for an unhealthy machine (string)
     retryPeriod: 20m
 
 # OpenStack cloud config credentials aka clouds.yaml and cacert
 # These parameters can be ignored if `cloudCredentialsSecretName` is provided
-# clouds:
-# cloudCACert:
+# clouds: OpenStack cloud credentials in clouds.yaml format (dictionary)
+# cloudCACert: CA certificate of the OpenStack cloud (string)
 
-# OpenStack cloud name to use in clouds.yaml
-# Defaults to openstack in OpenStack Magnum for application credentials
+# cloudName: Name of the cloud to use in clouds.yaml provided in clouds or cloudCredentialsSecretName (string)
 cloudName: openstack
 
 
@@ -53,74 +66,103 @@ cloudName: openstack
 # Below set of key/values are coming from Magnum Capi Helm driver #
 ###################################################################
 
-# Settings for kubernetes API server
-# Determines whether to use loadbalancer or not, floating IPs are not, and the loadbalancer provider to use
+# apiServer: Settings to use to access k8s api server (dictionary)
 apiServer:
+  # enableLoadBalancer: Use loadbalancer to provide k8s accesss (boolean)
   enableLoadBalancer: true
+  # loadBalancerProvider: OpenStack Octavia provider to use to deploy loadbalancers. Expected values are ovn, amphora (string)
   loadBalancerProvider: ovn
+  # allowedCidrs: CIDRs to allow traffic from. This is updated to OpenStack loadbalancer network created (list of CIDRs or ip ranges)
   allowedCidrs: []
+  # associateFloatingIP: Whether to associate floating ip to loadbalancer for k8s api server (boolean)
   associateFloatingIP: true
 
-# OpenStack clouds.yaml as a secret
-# Magnum CAPI Helm driver creates secret and provides the secret name
+# cloudCredentialsSecretName: K8s secret where OpenStack clouds.yaml is saved. Magnum CAPI Helm driver creates secret and provides the secret name (string)
 cloudCredentialsSecretName:
 
 # Networking related parameters
+# clusterNetworking: Networking related configuration (dictionary)
 clusterNetworking:
+  # dnsNameServers: DNS Name servers to be used by openstack networks created by cluster API (list)
   dnsNameservers: []
-  # externalNetworkId:
+  # externalNetworkId: OpenStack External Network UUID (string)
+  # internalNetwork: OpenStack Internal Network information (dictionary)
   # internalNetwork:
-  #   networkFilter:
-  #   nodeCidr:
-  #   subnetFilter:
+      # networkFilter: Filter to select an existing OpenStack network (string)
+      # networkFilter:
+      # nodeCidr: OpenStack subnets to be created (string)
+      # nodeCidr:
+      # subnetFilter: Filter to select an existing OpenStack subnet (string)
+      # subnetFilter:
 
-# Control plane related parameters including scaling and health check requirements
+# controlPlane: Control plane related configuration (dictionary)
 controlPlane:
+  # healthCheck: Health check related configuration (dictionary)
   healthCheck:
+    # enabled: Whether Health check should be enabled for control plane nodes (boolean)
     enabled: False
+  # machineCount: Number of control plane nodes to be deployed (integer)
   machineCount: 1
+  # machineFlavor: OpenStack flavor to use to deploy instances (string)
   machineFlavor: m1.medium
 
-# Kubernetes version that is going to be deployed
+# kubernetesVersion: K8s version that is going to be deployed (string)
 kubernetesVersion: 1.32.6
 
-# Image ID to use to deploy control plane and worker VMs
-# machineImageId:
-# SSH Key to be used to deploy control plane and worker VMs
-# machineSSHKeyName:
+# machineImageId: OpenStack Image UUID to use to deploy control plane and worker instances (string)
+# machineSSHKeyName: OpenStack SSH Key to be injected to control plane and worker instances (string)
 
-# Default settings related to worker nodes
+# nodeGroupDefaults: Default configurations related to worker nodes (dictionary)
 nodeGroupDefaults:
+  # healthCheck: Health check related configuration (dictionary)
   healthCheck:
+    # enabled: Whether Health check should be enabled for worker nodes (boolean)
     enabled: true
 
-# Settings related to Worker node nodeGroups
-nodeGroups:
-#  - name: test
-#    machineFlavor: test
-#    machineCount: 1
-#    autoscale:
-#    machineCountMin:
-#    machineCountMax:
+# nodeGroups: Configuration related to Worker node nodeGroups (list)
+nodeGroups: []
+  # - name: Name of the node group (string)
+  #   machineFlavor: OpenStack flavor to use to deploy worker node instances (string)
+  #   machineCount: Number of worker nodes to be deployed as part of this nodeGroup (integer)
+  #   autoscale: Scaling related configuration (dictionary)
+  #   autoscale:
+        # machineCountMin: Minimum number of machines to scale in the node group (integer)
+        # machineCountMax: Maximum number of machines to scale in the node group (integer)
 
 # Cluster addons related parameters
 # By default OpenStack Cloud Controller Manager, CSI Cinder will be deployed
+# addons: Addons to be enabled/disabled and the corresponding configuration (dictionary)
 addons:
-addons:
+  # openstack addon configuration (dictionary)
+  # https://github.com/kubernetes/cloud-provider-openstack/blob/master/charts/openstack-cloud-controller-manager/values.yaml
   openstack:
+    # cloudConfig: OpenStack cloud config information  (dictionary)
     cloudConfig: {}
-#      LoadBalancer:
-#        lb-provider:
-#        lb-method:
-#        create-monitor:
+      # LoadBalancer: Loadbalancer related configuration (dictionary)
+      # LoadBalancer:
+          # lb-provider: OpenStack Octavia provider. Expected values are ovn, octavia (string)
+          # lb-method: OpenStack Octavia Loadbalancing method. ovn provider only supports SOURCE_IP_PORT (string)
+          # create-monitor: Whether to create monitors for OpenStack loadbalancers (boolean)
+    # https://github.com/kubernetes/cloud-provider-openstack/blob/master/charts/cinder-csi-plugin/values.yaml
+    # csiCinder: Cinder related configuration values (dictionary)
     csiCinder: {}
-#      additionalStorageClasses: []
-#      defaultStorageClass:
-#        allowVolumeExpansion: true
-#        allowedTopologies: []
-#        availabilityZone: nova
-#        enabled: True
-#        fstype: ext4
-#        name: default
-#        reclaimPolicy: Retain
-#        volumeType: __DEFAULT__
+      # additionalStorageClasses: Additional storage classes to be created (list)
+      # additionalStorageClasses: []
+      # defaultStorageClass: Create default storage class with following configuration (dictionary)
+      # defaultStorageClass:
+        # allowVolumeExpansion: Allow Volume expansion for storage class (boolean)
+        # allowVolumeExpansion: true
+        # allowedTopologies: Allowed topologies to be configured for storage class (list)
+        # allowedTopologies: []
+        # availabilityZone: Availability zone to be configured for storage class (string)
+        # availabilityZone: nova
+        # enabled: Whether to enable default storage class (boolean)
+        # enabled: True
+        # fsType: Filesystem type to be configured for storage class (string)
+        # fstype: ext4
+        # name: Name of the storage class (string)
+        # name: default
+        # reclaimPolicy: Reclaim policy to be configured for storage class (string)
+        # reclaimPolicy: Retain
+        # volumeType: Volume type to be configured for storage class (string)
+        # volumeType: __DEFAULT__
