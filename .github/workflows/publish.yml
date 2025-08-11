@@ -1,0 +1,44 @@
+name: Publish Helm Charts to GHCR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish-helm-chart-to-ghcr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: v3.14.4
+
+      - name: Login to GitHub Container Registry (GHCR)
+        run: sudo k8s helm registry login ghcr.io -u ${{ github.repository_owner }} -p ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package and Push Helm Chart to GHCR
+        run: |
+          CHART_PATH="charts/openstack-ck8s-cluster" 
+          CHART_NAME=$(sudo k8s helm inspect chart $CHART_PATH | grep 'name:' | awk '{print $2}')
+          CHART_VERSION=$(sudo k8s helm inspect chart $CHART_PATH | grep 'version:' | awk '{print $2}')
+          
+          # Package the chart
+          helm package -u $CHART_PATH
+          # Push the packaged chart to GHCR
+          helm push "$CHART_NAME-$CHART_VERSION.tgz" "oci://ghcr.io/${{ github.repository_owner }}/charts"
+          
+          # Optionally create a GitHub Release for the chart
+          gh release create "v$CHART_VERSION-$CHART_NAME" --title "Release $CHART_NAME v$CHART_VERSION" --notes "" "$CHART_NAME-$CHART_VERSION.tgz"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
