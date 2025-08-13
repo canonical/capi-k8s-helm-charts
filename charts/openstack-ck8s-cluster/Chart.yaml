@@ -8,7 +8,7 @@ version: 0.1.0
 appVersion: "1.9.6"
 
 dependencies:
-  - name: autoscaler
+  - name: cluster-autoscaler
     # https://kubernetes.github.io/autoscaler/index.yaml
     # Check helm chart version based on application version
     version: "9.37.0"
