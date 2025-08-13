@@ -1,9 +1,7 @@
 name: Publish Helm Charts to GHCR
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call
 
 jobs:
   publish-helm-chart-to-ghcr:
@@ -23,14 +21,17 @@ jobs:
         with:
           version: v3.14.4
 
+      - name: Set up dependencies
+        run: sudo snap install yq
+
       - name: Login to GitHub Container Registry (GHCR)
         run: helm registry login ghcr.io -u ${{ github.repository_owner }} -p ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package and Push Helm Chart to GHCR
         run: |
           CHART_PATH="charts/openstack-ck8s-cluster" 
-          CHART_NAME=$(helm inspect chart $CHART_PATH | grep 'name:' | awk '{print $2}')
-          CHART_VERSION=$(helm inspect chart $CHART_PATH | grep 'version:' | awk '{print $2}')
+          CHART_NAME=$(helm inspect chart $CHART_PATH | yq .name)
+          CHART_VERSION=$(helm inspect chart $CHART_PATH | yq .version)
           
           # Package the chart
           helm package -u $CHART_PATH
