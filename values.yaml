@@ -272,6 +272,13 @@ extraVolumeSecrets: {}
   #     - key: subkey
   #       path: mypath
 
+# extraVolumeClusterNamespaceSecrets -- Additional volumes to mount from Secrets in workload cluster namespace
+# secret name will be prefixed with release name
+extraVolumeClusterNamespaceSecrets: {}
+  # extraVolumeSecrets:
+  #   kubeconfig:
+  #     name: kubeconfig
+
 # initContainers -- Any additional init containers.
 initContainers: []
 

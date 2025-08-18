@@ -119,7 +119,7 @@ autoDiscovery.clusterName for clusterapi.
 autoDiscovery.namespace for clusterapi.
 */}}
 {{- define "cluster-autoscaler.capiAutodiscovery.namespace" -}}
-{{- print "namespace=" }}{{ .Values.autoDiscovery.namespace -}}
+{{- print "namespace=" }}{{ tpl (.Values.autoDiscovery.namespace) . -}}
 {{- end -}}
 
 {{/*
@@ -157,4 +157,13 @@ Return the autodiscoveryparameters for clusterapi.
 {{- else if .Values.autoDiscovery.labels -}}
     {{ include "cluster-autoscaler.capiAutodiscovery.labels" . }}
 {{- end -}}
+{{- end -}}
+
+{{/*
+Create a name for a cluster component.
+*/}}
+{{- define "cluster-autoscaler.componentName" -}}
+{{- $ctx := index . 0 -}}
+{{- $componentName := index . 1 -}}
+{{- printf "%s-%s" $ctx.Release.Name $componentName | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
