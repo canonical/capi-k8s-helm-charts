@@ -11,5 +11,5 @@ dependencies:
   - name: cluster-autoscaler
     # https://kubernetes.github.io/autoscaler/index.yaml
     # Check helm chart version based on application version
-    version: "9.37.0"
-    repository: https://kubernetes.github.io/autoscaler
+    version: "9.47.0"
+    repository: file://../cluster-autoscaler
