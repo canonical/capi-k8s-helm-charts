@@ -7,6 +7,9 @@ metadata:
     {{ include "openstack-ck8s-cluster.labels" . | nindent 4 }}
     ccmOpenStackChart: enabled
     csiCinderChart: enabled
+    {{- if .Values.addons.kubernetesDashboard.enabled }}
+    kubernetesDashboardChart: enabled
+    {{- end }}
 spec:
   clusterNetwork: {{ .Values.clusterNetwork | toYaml | nindent 4 }}
   controlPlaneRef:

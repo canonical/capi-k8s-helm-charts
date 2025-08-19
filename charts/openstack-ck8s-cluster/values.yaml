@@ -166,6 +166,12 @@ addons:
         # reclaimPolicy: Retain
         # volumeType: Volume type to be configured for storage class (string)
         # volumeType: __DEFAULT__
+  # kubernetes dashboard addon
+  # https://kubernetes.github.io/dashboard/index.yaml
+  kubernetesDashboard:
+    # enabled: Enable k8s dashboard or not (boolean)
+    enabled: False
+
 
 ###########################################
 # Dependency charts values.yaml overrides #
