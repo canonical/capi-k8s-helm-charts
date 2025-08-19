@@ -166,3 +166,50 @@ addons:
         # reclaimPolicy: Retain
         # volumeType: Volume type to be configured for storage class (string)
         # volumeType: __DEFAULT__
+
+###########################################
+# Dependency charts values.yaml overrides #
+###########################################
+# The keys are defined in ../cluster-autoscaler/values.yaml
+cluster-autoscaler:
+  nameOverride: autoscaler
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  image:
+    repository: registry.k8s.io/autoscaling/cluster-autoscaler
+    tag: v1.30.4
+  cloudProvider: clusterapi
+  autoDiscovery:
+    clusterName: "{{ include \"openstack-ck8s-cluster.clusterName\" . }}"
+    namespace: "{{ .Release.Namespace }}"
+  clusterAPIMode: kubeconfig-incluster
+  extraArgs:
+    logtostderr: true
+    stderrthreshold: info
+    v: 4
+    cordon-node-before-terminating: true
+    expander: least-waste,random
+    skip-nodes-with-custom-controller-pods: false
+    skip-nodes-with-local-storage: false
+    skip-nodes-with-system-pods: true
+    stderrthreshold: info
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+  extraVolumeMounts:
+    - name: kubeconfig
+      readonly: true
+      mountPath: /etc/kubernetes
+  extraVolumeClusterNamespaceSecrets:
+    kubeconfig:
+      mountPath: /etc/kubernetes
+      name: kubeconfig
