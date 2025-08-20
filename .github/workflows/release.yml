@@ -37,9 +37,6 @@ jobs:
           helm package -u $CHART_PATH
           # Push the packaged chart to GHCR
           helm push "$CHART_NAME-$CHART_VERSION.tgz" "oci://ghcr.io/${{ github.repository_owner }}/charts"
-          
-          # Optionally create a GitHub Release for the chart
-          gh release create "v$CHART_VERSION-$CHART_NAME" --title "Release $CHART_NAME v$CHART_VERSION" --notes "" "$CHART_NAME-$CHART_VERSION.tgz"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
