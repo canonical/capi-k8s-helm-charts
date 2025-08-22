@@ -1,0 +1,28 @@
+{{- if .Values.addons.openstack.k8sKeystoneAuth.enabled }}
+---
+apiVersion: addons.cluster.x-k8s.io/v1alpha1
+kind: HelmChartProxy
+metadata:
+  name: {{ include "openstack-ck8s-cluster.componentName" (list . "k8s-keystone-auth") }}
+  labels: {{ include "openstack-ck8s-cluster.componentLabels" (list . "k8s-keystone-auth") | nindent 4 }}
+spec:
+  clusterSelector:
+    matchLabels:
+      k8sKeystoneAuthChart: enabled
+  namespace: kube-system
+  repoURL: https://catalyst-cloud.github.io/capi-plugin-helm-charts
+  chartName: k8s-keystone-auth
+  version: 1.5.1
+  options:
+    waitForJobs: true
+    wait: true
+    timeout: 5m
+    install:
+      createNamespace: true
+  {{- if and .Values.addons.openstack.k8sKeystoneAuth.values .Values.addons.openstack.k8sKeystoneAuth.values.openstackAuthUrl .Values.addons.openstack.k8sKeystoneAuth.values.projectId }}
+  valuesTemplate: |
+    {{- toYaml .Values.addons.openstack.k8sKeystoneAuth.values | nindent 4 }}
+  {{- else }}
+  {{- fail (printf "Required k8sKeystoneAuth openstackAuthUrl and projectId") }}
+  {{- end }}
+{{- end }}

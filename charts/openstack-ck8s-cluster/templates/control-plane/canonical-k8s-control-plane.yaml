@@ -23,8 +23,36 @@ spec:
   remediationStrategy: {{ toYaml .Values.ck8sControlPlane.remediationStrategy | nindent 4 }}
   replicas: {{ .Values.controlPlane.machineCount }}
   spec:
+    {{- if .Values.addons.openstack.k8sKeystoneAuth.enabled }}
+    files:
+      - path: /var/snap/k8s/common/args/conf.d/k8s-auth-token-webhook.conf
+        content: |
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - cluster:
+              insecure-skip-tls-verify: true
+              server: https://127.0.0.1:8443/webhook
+            name: webhook
+          users:
+          - name: webhook
+          contexts:
+          - context:
+              cluster: webhook
+              user: webhook
+            name: webhook
+          current-context: webhook
+    postRunCommands:
+      - echo "--authentication-token-webhook-config-file=/var/snap/k8s/common/args/conf.d/k8s-auth-token-webhook.conf" >> /var/snap/k8s/common/args/kube-apiserver
+      - sudo snap restart k8s.kube-apiserver
+    {{- end }}
     controlPlane:
       cloudProvider: external
+      {{- if .Values.addons.openstack.k8sKeystoneAuth.enabled }}
+      extraKubeAPIServerArgs:
+        --authorization-webhook-config-file: /var/snap/k8s/common/args/conf.d/k8s-auth-token-webhook.conf
+        --authorization-mode: Node,RBAC,Webhook
+      {{- end }}
     extraKubeletArgs:
       --provider-id: openstack:///{{ "{{" }} instance_id {{ "}}" }}
   version: v{{ .Values.kubernetesVersion | trimPrefix "v" }}
