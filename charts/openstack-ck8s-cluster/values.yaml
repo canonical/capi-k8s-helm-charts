@@ -143,6 +143,7 @@ addons:
           # lb-provider: OpenStack Octavia provider. Expected values are ovn, octavia (string)
           # lb-method: OpenStack Octavia Loadbalancing method. ovn provider only supports SOURCE_IP_PORT (string)
           # create-monitor: Whether to create monitors for OpenStack loadbalancers (boolean)
+
     # https://github.com/kubernetes/cloud-provider-openstack/blob/master/charts/cinder-csi-plugin/values.yaml
     # csiCinder: Cinder related configuration values (dictionary)
     csiCinder: {}
@@ -166,6 +167,19 @@ addons:
         # reclaimPolicy: Retain
         # volumeType: Volume type to be configured for storage class (string)
         # volumeType: __DEFAULT__
+
+    # k8s-keystone-auth addon
+    # https://github.com/catalyst-cloud/capi-plugin-helm-charts/blob/main/charts/k8s-keystone-auth
+    k8sKeystoneAuth:
+      # enabled: Enable keystone-k8s-auth or not (boolean)
+      enabled: False
+      # Values required for the helm chart (dictionary)
+      # values:
+        # openstackAuthUrl: Auth URL of Openstack cloud (string)
+        # openstackAuthUrl:
+        # proejctId: Project ID in which the k8s cluster is deployed (string)
+        # projectId:
+
   # kubernetes dashboard addon
   # https://kubernetes.github.io/dashboard/index.yaml
   kubernetesDashboard:

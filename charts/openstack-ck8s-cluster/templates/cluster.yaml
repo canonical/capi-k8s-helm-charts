@@ -10,6 +10,9 @@ metadata:
     {{- if .Values.addons.kubernetesDashboard.enabled }}
     kubernetesDashboardChart: enabled
     {{- end }}
+    {{- if .Values.addons.openstack.k8sKeystoneAuth.enabled }}
+    k8sKeystoneAuthChart: enabled
+    {{- end }}
 spec:
   clusterNetwork: {{ .Values.clusterNetwork | toYaml | nindent 4 }}
   controlPlaneRef:
